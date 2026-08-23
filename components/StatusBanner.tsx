@@ -33,7 +33,9 @@ export function StatusBanner({ onRetry }: { onRetry: () => void }) {
   return (
     <div
       className="pointer-events-none fixed inset-x-0 z-30 flex justify-center px-[var(--gutter)]"
-      style={{ top: 'calc(max(env(safe-area-inset-top), 0.75rem) + 2.75rem)' }}
+      // Below the floating header rather than under it. Hard-coded offsets drift
+      // the moment the bar's geometry changes, which is exactly what happened.
+      style={{ top: 'calc(var(--header-space) + 0.5rem)' }}
     >
       <div className="material pointer-events-auto flex max-w-full items-center gap-2.5 rounded-[var(--radius-pill)] py-2 pr-2 pl-3.5">
         <Icon

@@ -171,7 +171,7 @@ export function Sheet({
           </div>
 
           {/* `min-h-0` is what makes this actually scroll. */}
-          <div className="scroll-y min-h-0 flex-1 pb-[max(env(safe-area-inset-bottom),1.25rem)]">
+          <div className="scroll-y min-h-0 flex-1 pb-[calc(var(--safe-bottom)+0.5rem)]">
             {children}
           </div>
         </div>

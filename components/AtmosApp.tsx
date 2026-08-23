@@ -108,7 +108,7 @@ function AppShell() {
 
       <main
         ref={scrollRef}
-        className="scroll-y relative z-10 h-dvh pb-[calc(var(--nav-height)+max(env(safe-area-inset-bottom),0.5rem))] lg:pb-10"
+        className="scroll-y relative z-10 h-dvh pb-[calc(var(--nav-space)+1rem)] lg:pb-10"
       >
         {fatal ? (
           <ErrorState onChooseLocation={() => openPanel('locations')} />
@@ -123,6 +123,32 @@ function AppShell() {
           </>
         )}
       </main>
+
+      <div
+        className="pointer-events-none fixed inset-x-0 top-0 z-20 lg:hidden"
+        aria-hidden
+        style={{
+          height: 'calc(var(--header-space) + 1rem)',
+          background:
+            'linear-gradient(to bottom, rgb(4 8 14 / 0.8) 0%, rgb(4 8 14 / 0.4) 55%, transparent 100%)',
+          // Only while content is actually passing underneath. Left constant it
+          // would darken the top of an otherwise pristine sky for no reason.
+          opacity: 'calc(var(--scroll) * 1.8)',
+        }}
+      />
+
+      {/* Content scrolls under the floating bar, so it needs somewhere to go:
+          without this it is cut off dead straight by the bottom edge of the
+          screen. Only on the phone — the desktop nav lives in the header. */}
+      <div
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-20 lg:hidden"
+        aria-hidden
+        style={{
+          height: 'calc(var(--nav-space) + 1.5rem)',
+          background:
+            'linear-gradient(to top, rgb(4 8 14 / 0.9) 0%, rgb(4 8 14 / 0.55) 45%, transparent 100%)',
+        }}
+      />
 
       <BottomNav
         view={view}

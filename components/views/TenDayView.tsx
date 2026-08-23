@@ -36,7 +36,7 @@ export function TenDayView() {
   );
 
   return (
-    <div className="mx-auto w-full max-w-[46rem] pt-[calc(max(env(safe-area-inset-top),0.75rem)+3.5rem)] lg:px-8">
+    <div className="mx-auto w-full max-w-[46rem] pt-[calc(var(--header-space)+1.25rem)] lg:px-8">
       <header className="gutter">
         <p className="eyebrow">Próximos 10 días</p>
         {highlight && <p className="legible display-lg mt-5 max-w-[24rem]">{highlight}</p>}

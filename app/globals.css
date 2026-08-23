@@ -162,9 +162,19 @@
 :root {
   /* Layout */
   --gutter: 1.375rem;
-  /* Height of the tab row itself. The home-indicator inset is added on top of
-     this wherever the value is used, so it must not be baked in here. */
+  /* The floating tab bar. Three tokens rather than one, because the bar, the
+     scroll container that has to clear it and the install hint that sits above
+     it all need to agree — and they drifted apart when each did its own sum. */
   --nav-height: 3.25rem;
+  /* Room iOS reserves for the home indicator and the Dynamic Island, with a
+     floor for devices that have neither. */
+  --safe-bottom: max(env(safe-area-inset-bottom), 0.75rem);
+  --safe-top: max(env(safe-area-inset-top), 0.75rem);
+  /* Gap between a floating bar and that reserved room. */
+  --nav-gap: 0.625rem;
+  /* Total vertical space each bar occupies, inset included. */
+  --nav-space: calc(var(--nav-height) + var(--safe-bottom) + var(--nav-gap));
+  --header-space: calc(var(--nav-height) + var(--safe-top) + var(--nav-gap));
 
   /* Radii */
   --radius-xs: 0.5rem;
@@ -270,11 +280,11 @@ html {
 }
 
 .safe-top {
-  padding-top: max(env(safe-area-inset-top), 0.75rem);
+  padding-top: var(--safe-top);
 }
 
 .safe-bottom {
-  padding-bottom: max(env(safe-area-inset-bottom), 0.75rem);
+  padding-bottom: var(--safe-bottom);
 }
 
 /* Horizontal scrollers: momentum, snap, and no visible bar. */
@@ -792,4 +802,36 @@ html {
   text-transform: uppercase;
   color: var(--ink-faint);
   white-space: nowrap;
+}
+
+/* -----------------------------------------------------------------------------
+   Floating bars
+
+   Both the header and the tab bar float clear of the screen edges rather than
+   being welded to them. On iPhone that is the only way to avoid a hollow strip:
+   the system reserves space at both ends for the Dynamic Island and the home
+   indicator, and an edge-anchored bar has to leave it empty. Floating puts that
+   space outside the bar, where it reads as background.
+   -------------------------------------------------------------------------- */
+
+.floating-bar {
+  background: color-mix(in oklab, var(--sky-zenith) 86%, transparent);
+  backdrop-filter: blur(22px) saturate(1.2);
+  -webkit-backdrop-filter: blur(22px) saturate(1.2);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 34px rgb(2 5 10 / 0.38);
+}
+
+/* The header keeps its own scroll-reactive backdrop on wide screens, where a
+   narrow floating capsule would look lost across 1400 px. */
+@media (min-width: 1024px) {
+  .floating-bar--flat {
+    background: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border-color: transparent;
+    border-radius: 0;
+    box-shadow: none;
+  }
 }

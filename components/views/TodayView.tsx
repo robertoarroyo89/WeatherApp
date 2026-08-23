@@ -38,7 +38,7 @@ export function TodayView() {
   const trend = getTemperatureTrendSummary(bundle, nowTs);
 
   return (
-    <div className="mx-auto w-full max-w-[46rem] pt-[calc(max(env(safe-area-inset-top),0.75rem)+3.5rem)] lg:max-w-[64rem] lg:px-8">
+    <div className="mx-auto w-full max-w-[46rem] pt-[calc(var(--header-space)+1.25rem)] lg:max-w-[64rem] lg:px-8">
       <header className="gutter">
         <p className="eyebrow">{formatLongDate(nowTs, bundle.timezone)}</p>
         <div className="mt-5 flex items-end gap-4">

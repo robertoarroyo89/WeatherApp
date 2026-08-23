@@ -7,10 +7,15 @@ export type { ViewName };
 /**
  * Navigation.
  *
- * Centred labels in tracked mono caps, separated by hairlines, with the active
- * one marked by a small filled square above it. No pills, no icons, no sliding
- * indicator — the vocabulary of print, not of a system control, which is the
- * point.
+ * A floating strip rather than a bar welded to the bottom edge. That is not a
+ * style choice: iOS reserves about 34 px at the bottom for the home indicator,
+ * and an edge-anchored bar has to leave it empty, which reads as a hollow gap
+ * under the labels no matter where the padding sits. Floating puts that space
+ * *outside* the bar, where it is simply background.
+ *
+ * Centred labels in tracked mono caps, hairline dividers between the cells, the
+ * active one marked by a small square above it. A soft rectangle rather than a
+ * capsule — the vocabulary of print, not of a system control.
  */
 export function BottomNav({
   view,
@@ -25,62 +30,46 @@ export function BottomNav({
 }) {
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-30 lg:hidden"
-      style={{
-        background:
-          'linear-gradient(to top, rgb(4 8 14 / 0.68) 0%, rgb(4 8 14 / 0.34) 62%, transparent 100%)',
-        backdropFilter: 'blur(18px)',
-        WebkitBackdropFilter: 'blur(18px)',
-      }}
+      className="gutter fixed inset-x-0 z-30 flex justify-center lg:hidden"
+      style={{ bottom: 'calc(var(--safe-bottom) + var(--nav-gap))' }}
       aria-label="Secciones"
     >
-      <div className="border-hairline border-t">
-        <ul className="mx-auto flex max-w-lg">
-          {NAV_ITEMS.map((item, index) => {
-            const active = item.id === 'more' ? moreOpen : view === item.id;
-            return (
-              <li
-                key={item.id}
-                className="flex-1"
-                style={{
-                  borderLeft: index > 0 ? '1px solid var(--hairline)' : undefined,
-                  // The home-indicator inset lives on the cell, not on the bar.
-                  // Put it on the bar and the dividers stop 34 px short of the
-                  // screen edge, so you can see exactly where the bar ends and a
-                  // hollow strip begins underneath it. Here the cells — and
-                  // their dividers — run all the way down, and the inset reads as
-                  // the bar's own bottom margin.
-                  paddingBottom: 'max(env(safe-area-inset-bottom), 0.5rem)',
-                }}
+      <ul className="floating-bar flex h-[var(--nav-height)] w-full max-w-sm overflow-hidden">
+        {NAV_ITEMS.map((item, index) => {
+          const active = item.id === 'more' ? moreOpen : view === item.id;
+          return (
+            <li
+              key={item.id}
+              className="flex-1"
+              style={{ borderLeft: index > 0 ? '1px solid var(--hairline)' : undefined }}
+            >
+              <button
+                type="button"
+                onClick={() => (item.id === 'more' ? onMore() : onSelect(item.id))}
+                aria-current={active ? 'page' : undefined}
+                className="pressable relative flex h-full w-full items-center justify-center"
               >
-                <button
-                  type="button"
-                  onClick={() => (item.id === 'more' ? onMore() : onSelect(item.id))}
-                  aria-current={active ? 'page' : undefined}
-                  className="pressable relative flex h-[3.25rem] w-full items-center justify-center"
+                {/* Absolutely positioned so the label stays truly centred rather
+                    than being nudged sideways by a marker. */}
+                <span
+                  className="absolute top-[0.5rem] left-1/2 h-[3px] w-[3px] -translate-x-1/2 transition-opacity duration-200"
+                  style={{ background: 'var(--accent)', opacity: active ? 1 : 0 }}
+                  aria-hidden
+                />
+                <span
+                  className="[font-family:var(--font-mono)] text-[0.625rem] tracking-[0.16em] uppercase transition-colors duration-200"
+                  style={{
+                    color: active ? 'var(--ink)' : 'var(--ink-faint)',
+                    fontWeight: active ? 500 : 400,
+                  }}
                 >
-                  {/* Absolutely positioned so the label stays truly centred
-                      rather than being nudged sideways by a marker. */}
-                  <span
-                    className="absolute top-[0.5625rem] left-1/2 h-[3px] w-[3px] -translate-x-1/2 transition-opacity duration-200"
-                    style={{ background: 'var(--accent)', opacity: active ? 1 : 0 }}
-                    aria-hidden
-                  />
-                  <span
-                    className="[font-family:var(--font-mono)] text-[0.625rem] tracking-[0.16em] uppercase transition-colors duration-200"
-                    style={{
-                      color: active ? 'var(--ink)' : 'var(--ink-faint)',
-                      fontWeight: active ? 500 : 400,
-                    }}
-                  >
-                    {item.label}
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
+                  {item.label}
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
     </nav>
   );
 }

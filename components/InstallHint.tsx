@@ -36,7 +36,7 @@ export function InstallHint() {
       aria-hidden={!visible}
       inert={!visible}
       style={{
-        bottom: 'calc(var(--nav-height) + max(env(safe-area-inset-bottom), 0.5rem) + 0.75rem)',
+        bottom: 'calc(var(--nav-space) + 0.625rem)',
       }}
     >
       {/* A stronger material than the app's default: this floats over live
