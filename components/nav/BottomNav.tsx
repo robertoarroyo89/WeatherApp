@@ -27,7 +27,6 @@ export function BottomNav({
     <nav
       className="fixed inset-x-0 bottom-0 z-30 lg:hidden"
       style={{
-        paddingBottom: 'max(env(safe-area-inset-bottom), 0.5rem)',
         background:
           'linear-gradient(to top, rgb(4 8 14 / 0.68) 0%, rgb(4 8 14 / 0.34) 62%, transparent 100%)',
         backdropFilter: 'blur(18px)',
@@ -43,7 +42,16 @@ export function BottomNav({
               <li
                 key={item.id}
                 className="flex-1"
-                style={{ borderLeft: index > 0 ? '1px solid var(--hairline)' : undefined }}
+                style={{
+                  borderLeft: index > 0 ? '1px solid var(--hairline)' : undefined,
+                  // The home-indicator inset lives on the cell, not on the bar.
+                  // Put it on the bar and the dividers stop 34 px short of the
+                  // screen edge, so you can see exactly where the bar ends and a
+                  // hollow strip begins underneath it. Here the cells — and
+                  // their dividers — run all the way down, and the inset reads as
+                  // the bar's own bottom margin.
+                  paddingBottom: 'max(env(safe-area-inset-bottom), 0.5rem)',
+                }}
               >
                 <button
                   type="button"

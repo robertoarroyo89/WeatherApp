@@ -162,7 +162,9 @@
 :root {
   /* Layout */
   --gutter: 1.375rem;
-  --nav-height: 3.75rem;
+  /* Height of the tab row itself. The home-indicator inset is added on top of
+     this wherever the value is used, so it must not be baked in here. */
+  --nav-height: 3.25rem;
 
   /* Radii */
   --radius-xs: 0.5rem;
