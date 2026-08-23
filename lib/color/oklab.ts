@@ -117,6 +117,16 @@ export function oklabToRgb({ L, a, b, alpha }: Oklab): Rgb {
   return { r: fromLinear(lr), g: fromLinear(lg), b: fromLinear(lb), a: alpha };
 }
 
+/**
+ * Hex form, for the places CSS colour functions are not accepted — notably the
+ * `theme-color` meta tag, which older iOS and Android versions parse strictly.
+ */
+export function toHex(color: string): string {
+  const { r, g, b } = parseColor(color);
+  const pair = (channel: number) => channel.toString(16).padStart(2, '0');
+  return `#${pair(r)}${pair(g)}${pair(b)}`;
+}
+
 export function formatRgb({ r, g, b, a }: Rgb): string {
   if (a >= 0.999) return `rgb(${r} ${g} ${b})`;
   return `rgb(${r} ${g} ${b} / ${Math.round(a * 1000) / 1000})`;

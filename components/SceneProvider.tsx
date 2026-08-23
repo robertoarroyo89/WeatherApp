@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
 } from 'react';
+import { toHex } from '@/lib/color/oklab';
 import {
   paletteToCssVars,
   placeholderScene,
@@ -155,6 +156,29 @@ function SceneVariables({
       dragging ? '0ms' : reducedMotion ? '1ms' : '1500ms',
     );
   }, [dragging, reducedMotion]);
+
+  // Keep `theme-color` on the current sky.
+  //
+  // This is what makes an installed app reach the top of the screen. iOS paints
+  // the strip behind the status bar with `theme-color`, so a fixed value sits
+  // there as a flat band with a hard edge where the real sky begins — most
+  // obvious at night, when a static navy meets an almost-black zenith. Following
+  // the zenith makes the band and the sky the same colour, and the seam
+  // disappears. On Android it tints the system bars for the same reason.
+  const themeColor = toHex(scene.palette.zenith);
+  useEffect(() => {
+    let meta = document.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.name = 'theme-color';
+      document.head.appendChild(meta);
+    }
+    meta.content = themeColor;
+    // And the document's own background, so any surface the scene does not
+    // cover — an overscroll rubber-band, a system strip — is the same colour as
+    // the sky rather than a fixed navy.
+    document.documentElement.style.backgroundColor = themeColor;
+  }, [themeColor]);
 
   return null;
 }

@@ -287,6 +287,14 @@ It then launches standalone: no address bar, portrait-locked, correct spacing
 around the Dynamic Island and the home indicator, and a launch background that
 matches the darkest sky in the palette so there is no white flash.
 
+`theme-color` is updated at runtime to the sky's current zenith. This is what
+makes the app actually reach the top of the screen: iOS paints the strip behind
+the status bar with `theme-color`, so a fixed value sits there as a flat band
+with a visible seam where the real sky begins — most obvious at night, when a
+static navy meets an almost-black zenith. Following the sky makes the band and
+the sky the same colour and the seam disappears. On Android the same tag tints
+the system bars, for the same reason.
+
 After forty seconds of real use, an iOS user browsing in Safari sees a one-time
 hint explaining this. It appears once, is dismissible, and never returns. Safari
 exposes no programmatic install, so the app explains the actual gesture instead

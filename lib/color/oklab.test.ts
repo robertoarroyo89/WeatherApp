@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { adjust, lightnessOf, mix, oklabToRgb, parseColor, rgbToOklab, withAlpha } from './oklab';
+import {
+  adjust,
+  lightnessOf,
+  mix,
+  oklabToRgb,
+  parseColor,
+  rgbToOklab,
+  toHex,
+  withAlpha,
+} from './oklab';
+import { buildPalette } from '@/lib/weather/palette';
 
 describe('parseColor', () => {
   it('reads 3, 6 and 8 digit hex', () => {
@@ -81,5 +91,40 @@ describe('adjust and withAlpha', () => {
     expect(withAlpha('#ffffff', 1)).toBe('rgb(255 255 255)');
     expect(withAlpha('#ffffff', 0.5)).toBe('rgb(255 255 255 / 0.5)');
     expect(withAlpha('#ffffff', 2)).toBe('rgb(255 255 255)');
+  });
+});
+
+describe('toHex', () => {
+  it('round-trips the rgb() strings the palette emits', () => {
+    expect(toHex('rgb(11 22 34)')).toBe('#0b1622');
+    expect(toHex('#0B1622')).toBe('#0b1622');
+    expect(toHex('rgb(255 255 255)')).toBe('#ffffff');
+    expect(toHex('rgb(0 0 0)')).toBe('#000000');
+  });
+
+  it('always emits six digits, so a strict parser accepts it', () => {
+    // theme-color is parsed strictly by older iOS and Android, where "#b1622"
+    // is simply ignored and the band falls back to a default.
+    for (const colour of ['rgb(1 2 3)', 'rgb(15 15 15)', 'rgb(170 187 204)']) {
+      expect(toHex(colour)).toMatch(/^#[0-9a-f]{6}$/);
+    }
+  });
+
+  it('describes a real sky, not black, at every hour', () => {
+    for (const elevation of [-40, -6, 0, 20, 60]) {
+      const hex = toHex(
+        buildPalette({
+          sunElevation: elevation,
+          cloudCover: 20,
+          precipitation: 0,
+          snowfall: 0,
+          kind: 'mostlyClear',
+          visibility: 22_000,
+          night: elevation < 0 ? 1 : 0,
+        }).zenith,
+      );
+      expect(hex).toMatch(/^#[0-9a-f]{6}$/);
+      expect(hex).not.toBe('#000000');
+    }
   });
 });
