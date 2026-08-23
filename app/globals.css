@@ -1,0 +1,793 @@
+@import 'tailwindcss';
+
+/* =============================================================================
+   Atmos design system
+   =============================================================================
+   The palette is not authored here. It is computed per frame in
+   `lib/weather/palette.ts` from sun elevation, cloud cover and precipitation,
+   then written onto the app root as custom properties. Everything below styles
+   *around* those live values.
+   ========================================================================== */
+
+@theme inline {
+  --font-sans:
+    var(--font-inter), ui-sans-serif, system-ui, -apple-system, 'Helvetica Neue', sans-serif;
+
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-hairline: var(--hairline);
+  --color-accent: var(--accent);
+}
+
+/* -----------------------------------------------------------------------------
+   Registered custom properties.
+
+   Registering these as typed properties is what lets the browser *interpolate*
+   them: without `@property`, a sky colour change would snap. With it, the whole
+   atmosphere cross-fades over `--scene-dur` for free, on the compositor.
+   -------------------------------------------------------------------------- */
+
+@property --sky-zenith {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #0e2b48;
+}
+@property --sky-upper {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #23506f;
+}
+@property --sky-mid {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #3a7ba5;
+}
+@property --sky-horizon {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #a5c2cb;
+}
+@property --sky-sun {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #fffbf2;
+}
+@property --sky-haze {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #b4bdc4;
+}
+@property --sky-cloud-light {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #cdd8de;
+}
+@property --sky-cloud-dark {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #2c5573;
+}
+@property --sky-ambient {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #7ea6c0;
+}
+@property --sky-horizon-glow {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #8fa5ab;
+}
+
+@property --ink {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #f7f9fa;
+}
+@property --ink-muted {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: rgb(247 249 250 / 0.86);
+}
+@property --ink-faint {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: rgb(247 249 250 / 0.66);
+}
+@property --hairline {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: rgb(247 249 250 / 0.13);
+}
+@property --accent {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #ffe0b8;
+}
+
+@property --glow {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.46;
+}
+@property --stars {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --haze-strength {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --cloud-opacity {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.4;
+}
+@property --scrim {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.34;
+}
+@property --horizon-glow-strength {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+@property --sun-x {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.5;
+}
+@property --sun-y {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0.3;
+}
+/* How much the atmosphere should stand back on the current screen: 0 on the
+   home screen, higher on the data-heavy ones. */
+@property --view-dim {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+/* Live offset while a finger is dragging the sheet's handle. */
+@property --drag-y {
+  syntax: '<length>';
+  inherits: false;
+  initial-value: 0px;
+}
+
+:root {
+  /* Layout */
+  --gutter: 1.375rem;
+  --nav-height: 3.75rem;
+
+  /* Radii */
+  --radius-xs: 0.5rem;
+  --radius-sm: 0.75rem;
+  --radius-md: 1.125rem;
+  --radius-lg: 1.75rem;
+  --radius-pill: 999px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 170ms;
+  --dur-base: 300ms;
+  --dur-slow: 620ms;
+  /* How long the atmosphere takes to cross-fade. Set to 0 while scrubbing. */
+  --scene-dur: 1500ms;
+
+  /* Scroll progress of the active view, 0-1. Written from JS. */
+  --scroll: 0;
+
+  color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --scene-dur: 1ms;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Base
+   -------------------------------------------------------------------------- */
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  height: 100%;
+  /* Keeps the rubber-band area the colour of the sky rather than white. */
+  background-color: #0b1622;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100%;
+  background-color: #0b1622;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-weight: 300;
+  font-synthesis-weight: none;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  /* App-like: no page-level bounce, no accidental text selection on taps. */
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+input,
+textarea,
+[contenteditable] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+/* Visible focus for keyboards, invisible for pointers. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--radius-xs);
+}
+
+::selection {
+  background: color-mix(in oklab, var(--accent) 40%, transparent);
+}
+
+/* -----------------------------------------------------------------------------
+   Utilities
+   -------------------------------------------------------------------------- */
+
+/* The palette lands on <html>, so the transition lives here too and every
+   descendant inherits the interpolated value for free. */
+html {
+  transition-property:
+    --sky-zenith, --sky-upper, --sky-mid, --sky-horizon, --sky-sun, --sky-haze, --sky-cloud-light,
+    --sky-cloud-dark, --sky-ambient, --sky-horizon-glow, --ink, --ink-muted, --ink-faint,
+    --hairline, --accent, --glow, --stars, --haze-strength, --cloud-opacity, --scrim,
+    --horizon-glow-strength, --sun-x, --sun-y, --view-dim;
+  transition-duration: var(--scene-dur);
+  transition-timing-function: linear;
+}
+
+.gutter {
+  padding-inline: var(--gutter);
+}
+
+.safe-top {
+  padding-top: max(env(safe-area-inset-top), 0.75rem);
+}
+
+.safe-bottom {
+  padding-bottom: max(env(safe-area-inset-bottom), 0.75rem);
+}
+
+/* Horizontal scrollers: momentum, snap, and no visible bar. */
+.scroll-x {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+}
+
+.scroll-x::-webkit-scrollbar {
+  display: none;
+}
+
+.scroll-y {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  overscroll-behavior-y: contain;
+}
+
+.scroll-y::-webkit-scrollbar {
+  display: none;
+}
+
+.tnum {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* Typography ---------------------------------------------------------------- */
+
+/* Labels. Tracked-out mono caps, so they read as instrument markings rather
+   than as headings. */
+.eyebrow,
+.section-label {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+}
+
+/* The temperature. A display serif at this size is the single biggest reason
+   the app does not look like every other weather app. */
+.hero-temp {
+  font-family: var(--font-display);
+  font-size: clamp(7rem, 38vw, 13rem);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  line-height: 0.78;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+/* Editorial statements: the summary headline, panel titles, the 10-day lead. */
+.display-lg {
+  font-family: var(--font-display);
+  font-size: clamp(1.875rem, 8vw, 2.625rem);
+  font-weight: 400;
+  line-height: 1.08;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+.display-md {
+  font-family: var(--font-display);
+  font-size: 1.625rem;
+  font-weight: 400;
+  line-height: 1.14;
+  letter-spacing: -0.01em;
+}
+
+/* Large readouts inside tables and panels. */
+.data-xl {
+  font-family: var(--font-display);
+  font-size: clamp(2.25rem, 9vw, 3rem);
+  font-weight: 400;
+  letter-spacing: -0.015em;
+  line-height: 1;
+}
+
+.data-lg {
+  font-family: var(--font-mono);
+  font-size: 1.25rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Numeric readouts. Mono keeps columns aligned and reads as measurement. */
+.readout {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+.prose-summary {
+  font-size: 1.0625rem;
+  font-weight: 300;
+  line-height: 1.55;
+  letter-spacing: 0.002em;
+  text-wrap: pretty;
+}
+
+/* Readability: a whisper of shadow keeps light text legible over a bright sky
+   without the muddy "text on a dark box" look. */
+.legible {
+  text-shadow:
+    0 1px 24px rgb(6 10 16 / calc(0.32 + var(--scrim) * 0.36)),
+    0 1px 3px rgb(6 10 16 / 0.22);
+}
+
+/* Tactile press feedback. Deliberately tiny — 2 % and 1 px, no bounce. */
+.pressable {
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    opacity var(--dur-fast) var(--ease-out);
+}
+
+.pressable:active {
+  transform: scale(0.978);
+  opacity: 0.82;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pressable:active {
+    transform: none;
+  }
+}
+
+/* Hairline rules that read as structure rather than as card borders. */
+.rule-top {
+  border-top: 1px solid var(--hairline);
+}
+
+.rule-bottom {
+  border-bottom: 1px solid var(--hairline);
+}
+
+/* Two materials, because they do different jobs.
+
+   `.material` is for small floating things — chips, pills, a button over the
+   sky. It is deliberately sheer: you should still feel the weather through it.
+
+   `.panel` is for surfaces that carry text you have to read. Sheer glass under
+   a list of numbers is not atmosphere, it is illegibility, so this one is nearly
+   opaque and only keeps the blur for depth. */
+.material {
+  background: color-mix(in oklab, var(--sky-zenith) 52%, transparent);
+  backdrop-filter: blur(20px) saturate(1.2);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  border: 1px solid var(--hairline);
+}
+
+.panel {
+  /* Opaque, not glass. The hero temperature behind a sheet is 120 px of
+     near-white; at any transparency low enough to read a table through, it
+     ghosts straight through the panel and looks like a rendering fault. So the
+     surface is solid and takes its colour from the current sky instead, with a
+     soft sheen along the top edge so it still reads as a material lifted above
+     the weather rather than a grey box dropped on top of it. */
+  background:
+    linear-gradient(
+      to bottom,
+      color-mix(in oklab, var(--ink) 6%, transparent) 0%,
+      transparent 260px
+    ),
+    var(--sky-zenith);
+  border-top: 1px solid var(--hairline);
+  box-shadow: 0 -18px 60px rgb(2 5 10 / 0.5);
+}
+
+/* -----------------------------------------------------------------------------
+   Scene keyframes
+   -------------------------------------------------------------------------- */
+
+@keyframes cloud-drift {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-25%, 0, 0);
+  }
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes lightning-flash {
+  0% {
+    opacity: 0;
+  }
+  6% {
+    opacity: 0.62;
+  }
+  13% {
+    opacity: 0.06;
+  }
+  20% {
+    opacity: 0.44;
+  }
+  30% {
+    opacity: 0.02;
+  }
+  46% {
+    opacity: 0.2;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    opacity: 0.86;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.035);
+  }
+}
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 14px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes shimmer {
+  from {
+    transform: translate3d(-100%, 0, 0);
+  }
+  to {
+    transform: translate3d(100%, 0, 0);
+  }
+}
+
+.rise-in {
+  animation: rise-in var(--dur-slow) var(--ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise-in {
+    animation: none;
+  }
+
+  /* Atmospheric motion is decoration; the atmosphere itself is not. */
+  [data-scene-motion] {
+    animation: none !important;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Hero temperature
+   -------------------------------------------------------------------------- */
+
+.hero-degree {
+  /* The ° glyph is a small ring inside a large em box, so it has to be set much
+     larger than it looks to sit correctly beside 120 px numerals. */
+  font-size: clamp(3.4rem, 17vw, 5.6rem);
+  font-weight: 180;
+  line-height: 0.84;
+  margin-left: -0.04em;
+  opacity: 0.56;
+}
+
+/* View transitions: a short fade and lift, replayed by changing the key. */
+@keyframes view-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 10px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.view-enter {
+  animation: view-enter 260ms var(--ease-out) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .view-enter {
+    animation: none;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Bottom sheet
+
+   Pure CSS, deliberately. The sheet is the way in to five of the app's screens,
+   and a JavaScript animation loop that stalls — a throttled tab, a busy frame,
+   a library's scheduler — leaves it parked off-screen behind an invisible
+   backdrop that eats every tap. A compositor transition cannot stall.
+
+   `visibility` is transitioned alongside the transform so it flips to hidden
+   only once the sheet has finished leaving, which keeps the closed sheet out of
+   the accessibility tree and out of the way of pointers.
+   -------------------------------------------------------------------------- */
+
+.sheet-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  width: 100%;
+  height: 100%;
+  cursor: default;
+  background: rgb(3 6 11 / 0.52);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 240ms var(--ease-out),
+    visibility 240ms;
+}
+
+.sheet-backdrop[data-open='true'] {
+  opacity: 1;
+  visibility: visible;
+}
+
+.sheet-surface {
+  position: fixed;
+  inset-inline: 0;
+  bottom: 0;
+  z-index: 50;
+  /* The drag offset is a custom property rather than an inline transform, so the
+     gesture composes with whatever transform the current breakpoint uses instead
+     of overwriting it. */
+  transform: translate3d(0, calc(100% + var(--drag-y)), 0);
+  visibility: hidden;
+  transition:
+    transform 420ms var(--ease-out),
+    visibility 420ms;
+}
+
+.sheet-surface[data-open='true'] {
+  transform: translate3d(0, var(--drag-y), 0);
+  visibility: visible;
+}
+
+/* While a finger is on the handle the offset changes every frame, so the
+   transition has to stand aside or the sheet lags behind the finger. */
+.sheet-surface[data-dragging='true'] {
+  transition: none;
+}
+
+/* On a wide screen a full-width sheet stuck to the bottom edge is a phone
+   pattern wearing the wrong size. It becomes a centred dialog instead. */
+@media (min-width: 1024px) {
+  .sheet-surface {
+    inset-inline: auto;
+    left: 50%;
+    right: auto;
+    top: 50%;
+    bottom: auto;
+    width: min(46rem, calc(100vw - 5rem));
+    transform: translate3d(-50%, calc(-50% + 20px), 0);
+    opacity: 0;
+    transition:
+      transform 300ms var(--ease-out),
+      opacity 240ms var(--ease-out),
+      visibility 300ms;
+  }
+
+  .sheet-surface[data-open='true'] {
+    transform: translate3d(-50%, -50%, 0);
+    opacity: 1;
+  }
+
+  .sheet-surface .panel {
+    border: 1px solid var(--hairline);
+    border-radius: var(--radius-lg);
+  }
+
+  /* Dragging a dialog off the bottom of a desktop window makes no sense. */
+  .sheet-surface .sheet-handle {
+    cursor: default;
+  }
+}
+
+/* Floating hint ------------------------------------------------------------ */
+
+.hint {
+  opacity: 0;
+  visibility: hidden;
+  transform: translate3d(0, 16px, 0);
+  transition:
+    opacity 320ms var(--ease-out),
+    transform 320ms var(--ease-out),
+    visibility 320ms;
+}
+
+.hint[data-open='true'] {
+  opacity: 1;
+  visibility: visible;
+  transform: translate3d(0, 0, 0);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sheet-backdrop,
+  .sheet-surface,
+  .hint {
+    transition-duration: 1ms;
+  }
+}
+
+/* -----------------------------------------------------------------------------
+   Editorial devices
+
+   The furniture that replaces cards and centred stacks: numbered section rules,
+   leader-dotted data rows, and a hairline horizon. All print conventions, none
+   of them native-app conventions.
+   -------------------------------------------------------------------------- */
+
+/* A section heading that reads as a contents entry: index number, label, a rule
+   spanning the gap, and an optional right-aligned value. */
+.rule-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.rule-heading__index {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+.rule-heading__line {
+  flex: 1;
+  height: 1px;
+  background: var(--hairline);
+}
+
+.rule-heading__meta {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  font-variant-numeric: tabular-nums;
+}
+
+/* A data row with dotted leaders, as in an index or a specification sheet. The
+   leader is a repeating radial gradient rather than a row of full stops, so it
+   stays optically even at any width. */
+.leader-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.625rem;
+  padding-block: 0.6875rem;
+}
+
+.leader-row__label {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+.leader-row__leader {
+  flex: 1;
+  align-self: center;
+  height: 1px;
+  min-width: 1rem;
+  /* A repeating linear gradient, not a radial one: a half-pixel radial dot gets
+     rounded out of existence on a 1 px-tall element and the leader vanishes
+     entirely. This gives a guaranteed 1 px mark every 5 px. */
+  background-image: repeating-linear-gradient(
+    to right,
+    var(--ink-faint) 0 1px,
+    transparent 1px 5px
+  );
+  opacity: 0.5;
+}
+
+.leader-row__value {
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.leader-row__note {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  white-space: nowrap;
+}
