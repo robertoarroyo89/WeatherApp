@@ -835,3 +835,43 @@ html {
     box-shadow: none;
   }
 }
+
+/* -----------------------------------------------------------------------------
+   The scroll window
+
+   With floating bars, content passes behind them — and, more awkwardly, through
+   the system-inset strips beyond them, where it has no business being visible at
+   all. Darkening those strips with a gradient does not work: the app's night sky
+   is already almost black, so a black veil hides nothing, and during the day an
+   opaque one would be a grey band across a blue sky.
+
+   So the content is masked instead of shaded. The scroll area is fully opaque
+   between the two bars, fades across each bar's height — which reads correctly as
+   content behind glass — and is completely absent in the Dynamic Island and
+   home-indicator strips. It works at any hour because it never involves a colour.
+   -------------------------------------------------------------------------- */
+
+.view-scroll {
+  padding-bottom: calc(var(--nav-space) + 1rem);
+  --view-mask: linear-gradient(
+    to bottom,
+    transparent 0,
+    transparent calc(var(--safe-top) + var(--nav-gap)),
+    #000 var(--header-space),
+    #000 calc(100% - var(--nav-space)),
+    transparent calc(100% - var(--safe-bottom) - var(--nav-gap)),
+    transparent 100%
+  );
+  mask-image: var(--view-mask);
+  -webkit-mask-image: var(--view-mask);
+}
+
+/* Wide screens have a flat header and no bottom bar, so there is nothing to mask
+   around. */
+@media (min-width: 1024px) {
+  .view-scroll {
+    padding-bottom: 2.5rem;
+    mask-image: none;
+    -webkit-mask-image: none;
+  }
+}
