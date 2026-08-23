@@ -162,19 +162,21 @@
 :root {
   /* Layout */
   --gutter: 1.375rem;
-  /* The floating tab bar. Three tokens rather than one, because the bar, the
-     scroll container that has to clear it and the install hint that sits above
-     it all need to agree — and they drifted apart when each did its own sum. */
+  /* Bar geometry. Both bars sit on their screen edge and their backgrounds run
+     right to it; only their content is inset. */
   --nav-height: 3.25rem;
-  /* Room iOS reserves for the home indicator and the Dynamic Island, with a
-     floor for devices that have neither. */
+  /* What the system reserves: the Dynamic Island above, the home indicator
+     below, with a floor for devices that have neither. */
   --safe-bottom: max(env(safe-area-inset-bottom), 0.75rem);
   --safe-top: max(env(safe-area-inset-top), 0.75rem);
-  /* Gap between a floating bar and that reserved room. */
-  --nav-gap: 0.625rem;
-  /* Total vertical space each bar occupies, inset included. */
-  --nav-space: calc(var(--nav-height) + var(--safe-bottom) + var(--nav-gap));
-  --header-space: calc(var(--nav-height) + var(--safe-top) + var(--nav-gap));
+  /* Clearance under the tab labels — deliberately less than the full home
+     indicator inset. The indicator is a small pill very close to the edge, and
+     reserving all 34 px for it leaves the labels stranded high up the bar with
+     an empty band beneath them. */
+  --nav-inset: max(calc(var(--safe-bottom) - 0.875rem), 0.5rem);
+  /* Total height of each bar, inset included. */
+  --nav-space: calc(var(--nav-height) + var(--nav-inset));
+  --header-space: calc(var(--nav-height) + var(--safe-top));
 
   /* Radii */
   --radius-xs: 0.5rem;
@@ -805,38 +807,6 @@ html {
 }
 
 /* -----------------------------------------------------------------------------
-   Floating bars
-
-   Both the header and the tab bar float clear of the screen edges rather than
-   being welded to them. On iPhone that is the only way to avoid a hollow strip:
-   the system reserves space at both ends for the Dynamic Island and the home
-   indicator, and an edge-anchored bar has to leave it empty. Floating puts that
-   space outside the bar, where it reads as background.
-   -------------------------------------------------------------------------- */
-
-.floating-bar {
-  background: color-mix(in oklab, var(--sky-zenith) 86%, transparent);
-  backdrop-filter: blur(22px) saturate(1.2);
-  -webkit-backdrop-filter: blur(22px) saturate(1.2);
-  border: 1px solid var(--hairline);
-  border-radius: var(--radius-md);
-  box-shadow: 0 10px 34px rgb(2 5 10 / 0.38);
-}
-
-/* The header keeps its own scroll-reactive backdrop on wide screens, where a
-   narrow floating capsule would look lost across 1400 px. */
-@media (min-width: 1024px) {
-  .floating-bar--flat {
-    background: transparent;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
-    border-color: transparent;
-    border-radius: 0;
-    box-shadow: none;
-  }
-}
-
-/* -----------------------------------------------------------------------------
    The scroll window
 
    With floating bars, content passes behind them — and, more awkwardly, through
@@ -845,10 +815,14 @@ html {
    is already almost black, so a black veil hides nothing, and during the day an
    opaque one would be a grey band across a blue sky.
 
-   So the content is masked instead of shaded. The scroll area is fully opaque
-   between the two bars, fades across each bar's height — which reads correctly as
-   content behind glass — and is completely absent in the Dynamic Island and
-   home-indicator strips. It works at any hour because it never involves a colour.
+   So the content is masked instead of shaded. It is fully opaque between the two
+   bars, fades out over the last 28 px before each one, and is completely absent
+   behind them — so the glass shows sky and nothing else. Letting content sit
+   behind the glass sounds nicer but reads as a smear: the bars are 88 % opaque,
+   and 12 % of a headline showing through looks like a rendering fault rather than
+   like depth.
+
+   It works at any hour because it never involves a colour.
    -------------------------------------------------------------------------- */
 
 .view-scroll {
@@ -856,10 +830,10 @@ html {
   --view-mask: linear-gradient(
     to bottom,
     transparent 0,
-    transparent calc(var(--safe-top) + var(--nav-gap)),
-    #000 var(--header-space),
-    #000 calc(100% - var(--nav-space)),
-    transparent calc(100% - var(--safe-bottom) - var(--nav-gap)),
+    transparent var(--header-space),
+    #000 calc(var(--header-space) + 1.75rem),
+    #000 calc(100% - var(--nav-space) - 1.75rem),
+    transparent calc(100% - var(--nav-space)),
     transparent 100%
   );
   mask-image: var(--view-mask);
@@ -874,4 +848,19 @@ html {
     mask-image: none;
     -webkit-mask-image: none;
   }
+}
+
+/* -----------------------------------------------------------------------------
+   Bar material
+
+   Both bars sit on their screen edge and their background runs all the way to
+   it, so nothing is left hollow underneath. Only the labels are inset — and by
+   less than the system reserve, so they sit low in the bar rather than stranded
+   at the top of it.
+   -------------------------------------------------------------------------- */
+
+.bar-material {
+  background: color-mix(in oklab, var(--sky-zenith) 88%, transparent);
+  backdrop-filter: blur(22px) saturate(1.2);
+  -webkit-backdrop-filter: blur(22px) saturate(1.2);
 }

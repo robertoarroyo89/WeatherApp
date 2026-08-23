@@ -7,15 +7,14 @@ export type { ViewName };
 /**
  * Navigation.
  *
- * A floating strip rather than a bar welded to the bottom edge. That is not a
- * style choice: iOS reserves about 34 px at the bottom for the home indicator,
- * and an edge-anchored bar has to leave it empty, which reads as a hollow gap
- * under the labels no matter where the padding sits. Floating puts that space
- * *outside* the bar, where it is simply background.
+ * Sits on the bottom edge, with its background running all the way to it — the
+ * one arrangement that leaves nothing hollow underneath. The labels are inset by
+ * less than the full home-indicator reserve: the indicator is a small pill very
+ * close to the edge, and holding back all 34 px for it leaves the labels
+ * stranded high up the bar with a dead band beneath them.
  *
- * Centred labels in tracked mono caps, hairline dividers between the cells, the
- * active one marked by a small square above it. A soft rectangle rather than a
- * capsule — the vocabulary of print, not of a system control.
+ * Centred labels in tracked mono caps, hairline dividers running the bar's full
+ * height, the active one marked by a small square above it.
  */
 export function BottomNav({
   view,
@@ -29,47 +28,50 @@ export function BottomNav({
   moreOpen: boolean;
 }) {
   return (
-    <nav
-      className="gutter fixed inset-x-0 z-30 flex justify-center lg:hidden"
-      style={{ bottom: 'calc(var(--safe-bottom) + var(--nav-gap))' }}
-      aria-label="Secciones"
-    >
-      <ul className="floating-bar flex h-[var(--nav-height)] w-full max-w-sm overflow-hidden">
-        {NAV_ITEMS.map((item, index) => {
-          const active = item.id === 'more' ? moreOpen : view === item.id;
-          return (
-            <li
-              key={item.id}
-              className="flex-1"
-              style={{ borderLeft: index > 0 ? '1px solid var(--hairline)' : undefined }}
-            >
-              <button
-                type="button"
-                onClick={() => (item.id === 'more' ? onMore() : onSelect(item.id))}
-                aria-current={active ? 'page' : undefined}
-                className="pressable relative flex h-full w-full items-center justify-center"
+    <nav className="bar-material fixed inset-x-0 bottom-0 z-30 lg:hidden" aria-label="Secciones">
+      <div className="border-hairline border-t">
+        <ul className="mx-auto flex max-w-lg">
+          {NAV_ITEMS.map((item, index) => {
+            const active = item.id === 'more' ? moreOpen : view === item.id;
+            return (
+              <li
+                key={item.id}
+                className="flex-1"
+                style={{
+                  borderLeft: index > 0 ? '1px solid var(--hairline)' : undefined,
+                  // On the cell, not the bar, so the dividers reach the screen
+                  // edge instead of stopping short and exposing a hollow strip.
+                  paddingBottom: 'var(--nav-inset)',
+                }}
               >
-                {/* Absolutely positioned so the label stays truly centred rather
-                    than being nudged sideways by a marker. */}
-                <span
-                  className="absolute top-[0.5rem] left-1/2 h-[3px] w-[3px] -translate-x-1/2 transition-opacity duration-200"
-                  style={{ background: 'var(--accent)', opacity: active ? 1 : 0 }}
-                  aria-hidden
-                />
-                <span
-                  className="[font-family:var(--font-mono)] text-[0.625rem] tracking-[0.16em] uppercase transition-colors duration-200"
-                  style={{
-                    color: active ? 'var(--ink)' : 'var(--ink-faint)',
-                    fontWeight: active ? 500 : 400,
-                  }}
+                <button
+                  type="button"
+                  onClick={() => (item.id === 'more' ? onMore() : onSelect(item.id))}
+                  aria-current={active ? 'page' : undefined}
+                  className="pressable relative flex h-[var(--nav-height)] w-full items-center justify-center"
                 >
-                  {item.label}
-                </span>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+                  {/* Absolutely positioned so the label stays truly centred
+                      rather than being nudged sideways by a marker. */}
+                  <span
+                    className="absolute top-[0.5rem] left-1/2 h-[3px] w-[3px] -translate-x-1/2 transition-opacity duration-200"
+                    style={{ background: 'var(--accent)', opacity: active ? 1 : 0 }}
+                    aria-hidden
+                  />
+                  <span
+                    className="[font-family:var(--font-mono)] text-[0.625rem] tracking-[0.16em] uppercase transition-colors duration-200"
+                    style={{
+                      color: active ? 'var(--ink)' : 'var(--ink-faint)',
+                      fontWeight: active ? 500 : 400,
+                    }}
+                  >
+                    {item.label}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
     </nav>
   );
 }

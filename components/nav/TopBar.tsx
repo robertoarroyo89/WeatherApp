@@ -9,11 +9,15 @@ import { NAV_ITEMS, type ViewName } from './navItems';
  * The only persistent chrome above the fold: where you are, what time it is
  * there, and how to change it.
  *
- * A floating strip on the phone, matching the tab bar, so neither end of the
- * screen has a bar with dead space under it. On a wide screen it flattens into a
- * conventional header — a narrow capsule adrift in 1400 px of sky looks lost —
- * and picks up the section navigation, which is why the bottom bar disappears
- * there.
+ * Sits on the top edge with its background running under the status bar, so the
+ * sky reaches the very top of the screen. Only the content is held below the
+ * system reserve, because iOS draws the status bar over everything and text up
+ * there would be unreadable.
+ *
+ * Transparent over the hero and solid once the page scrolls: invisible chrome
+ * where there is nothing but sky behind it, a real bar as soon as there is
+ * content to separate from. On a wide screen it also carries the section
+ * navigation, which is why the bottom bar disappears there.
  */
 export function TopBar({
   onOpenLocations,
@@ -38,34 +42,29 @@ export function TopBar({
 
   return (
     <header className="fixed inset-x-0 top-0 z-30">
-      {/* Wide-screen backdrop only: a whisper of gradient over the hero, and a
+      {/* Two stacked backgrounds: a whisper of gradient over the hero, and a
           pre-blurred material that fades in as the page scrolls. Cross-fading
           opacity on a composited layer is free; animating a filter is not. */}
       <div
-        className="pointer-events-none absolute inset-0 hidden lg:block"
+        className="pointer-events-none absolute inset-0"
         aria-hidden
         style={{ background: 'linear-gradient(to bottom, rgb(4 8 14 / 0.34), transparent)' }}
       />
       <div
-        className="border-hairline pointer-events-none absolute inset-0 hidden border-b lg:block"
+        className="bar-material border-hairline pointer-events-none absolute inset-0 border-b"
         aria-hidden
-        style={{
-          background: 'color-mix(in oklab, var(--sky-zenith) 88%, transparent)',
-          backdropFilter: 'blur(20px) saturate(1.2)',
-          WebkitBackdropFilter: 'blur(20px) saturate(1.2)',
-          opacity: 'calc(var(--scroll) * 2.4)',
-        }}
+        style={{ opacity: 'calc(var(--scroll) * 2.4)' }}
       />
 
       <div
-        className="gutter relative mx-auto flex w-full max-w-[88rem] justify-center lg:px-8"
-        style={{ paddingTop: 'calc(var(--safe-top) + var(--nav-gap))' }}
+        className="gutter relative mx-auto flex w-full max-w-[88rem] lg:px-8"
+        style={{ paddingTop: 'var(--safe-top)' }}
       >
-        <div className="floating-bar floating-bar--flat flex h-[var(--nav-height)] w-full max-w-sm items-center justify-between px-2.5 lg:h-auto lg:max-w-none lg:px-0 lg:pb-2">
+        <div className="flex h-[var(--nav-height)] w-full items-center justify-between">
           <button
             type="button"
             onClick={onOpenLocations}
-            className="pressable flex h-full items-center gap-2 px-1"
+            className="pressable -ml-1 flex h-full items-center gap-2 px-1"
             aria-label="Cambiar de ubicación"
           >
             <span className="eyebrow legible text-ink">{location?.name ?? 'Sin ubicación'}</span>
